@@ -7,5 +7,6 @@ public class Maincontoller {
 	    public String sayHello() {
 	        return "hello";
 	        }
+			//new idea
 }
 
