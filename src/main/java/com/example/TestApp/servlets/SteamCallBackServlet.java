@@ -1,7 +1,7 @@
 package com.example.TestApp.servlets;
 
 import com.example.TestApp.security.JWTcore;
-import com.example.TestApp.MyUserDetails;
+import com.example.TestApp.security.MyUserDetails;
 import jakarta.json.Json;
 import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
@@ -39,6 +39,14 @@ public class SteamCallBackServlet extends HttpServlet {
     @Autowired
     private static final String API_URL = "https://api.opendota.com/api/players/";
 
+
+    private final JWTcore jwTcore;
+    public SteamCallBackServlet(JWTcore jwTcore)
+    {
+        this.jwTcore=jwTcore;
+    }
+
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Map<String, String[]> parameterMap = request.getParameterMap();
@@ -53,16 +61,18 @@ public class SteamCallBackServlet extends HttpServlet {
             String steamID = extractSteamID(params.get("openid.claimed_id"));
             String steamID32 = convertSteamID(steamID).toString();
             try {
+                //opendota
                 String[] profile = getDotaProfile(steamID32);
-                String token=authenticateUser();
+
+                String token=authenticateUser(steamID32);
 
                 Cookie tokenCookie = new Cookie("token", token);
                 tokenCookie.setHttpOnly(true);
                 tokenCookie.setSecure(true);
                 tokenCookie.setPath("/");
-                tokenCookie.setMaxAge(60 * 60);
+                tokenCookie.setMaxAge(10 * 60);
                 response.addCookie(tokenCookie);
-                response.sendRedirect("/myapp/secure-endpoint");
+                response.sendRedirect("/myapp/home");
 
             } catch (Exception e) {
                 System.err.println("An error occurred while fetching the Dota profile: " + e.getMessage());
@@ -160,20 +170,18 @@ public class SteamCallBackServlet extends HttpServlet {
         }
     }
 
-    private String authenticateUser()
+    private String authenticateUser(String steamID)
     {
         SimpleGrantedAuthority roleUserAuthority = new SimpleGrantedAuthority("ROLE_USER");
         List<SimpleGrantedAuthority> updatedAuthorities = Collections.singletonList(roleUserAuthority);
-        MyUserDetails userDetails = new MyUserDetails("test", "test", updatedAuthorities);
+        MyUserDetails userDetails = new MyUserDetails(steamID, "", updatedAuthorities);
         Authentication newAuth = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 userDetails.getPassword(),
                 updatedAuthorities
         );
         SecurityContextHolder.getContext().setAuthentication(newAuth);
-        JWTcore jwTcore= new JWTcore();
-        String token=jwTcore.generateToken(newAuth);
-        return token;
+        return jwTcore.generateToken( steamID);
     }
 
 

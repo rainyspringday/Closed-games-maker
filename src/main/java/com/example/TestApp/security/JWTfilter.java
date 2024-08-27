@@ -1,6 +1,5 @@
 package com.example.TestApp.security;
 
-import com.example.TestApp.MyUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -19,6 +18,11 @@ import java.util.List;
 
 @Component
 public class JWTfilter extends OncePerRequestFilter {
+    private final JWTcore jwTcore;
+
+    public JWTfilter(JWTcore jwTcore) {
+        this.jwTcore = jwTcore;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -34,12 +38,12 @@ public class JWTfilter extends OncePerRequestFilter {
                     }
                 }
             }
-
             if(token!=null)
             {
-                SimpleGrantedAuthority roleUserAuthority = new SimpleGrantedAuthority("ROLE_USER");
+
+                SimpleGrantedAuthority roleUserAuthority = new SimpleGrantedAuthority(jwTcore.getAuth(token)[1]);
                 List<SimpleGrantedAuthority> updatedAuthorities = Collections.singletonList(roleUserAuthority);
-                MyUserDetails userDetails = new MyUserDetails("test", "test", updatedAuthorities);
+                MyUserDetails userDetails = new MyUserDetails(jwTcore.getAuth(token)[0], "", updatedAuthorities);
                 Authentication newAuth = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         userDetails.getPassword(),

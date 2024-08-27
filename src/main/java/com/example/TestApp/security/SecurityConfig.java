@@ -38,8 +38,7 @@ public void setJWTfilter(JWTfilter jwTfilter)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers("/myapp/steam-login", "/myapp/steam-callback").permitAll()
-                                .requestMatchers("/myapp/secure-endpoint").authenticated()
-                                .anyRequest().permitAll()
+                                .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwTfilter, UsernamePasswordAuthenticationFilter.class);
 
